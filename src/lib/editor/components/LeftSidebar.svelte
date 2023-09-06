@@ -36,7 +36,8 @@
 			position: {
 				x: 0,
 				y: 0
-			}
+			},
+			rotation: 0
 		};
 
 		shadowEl.onload = (e) => {

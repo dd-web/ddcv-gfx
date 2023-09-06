@@ -10,12 +10,6 @@
 	/** @type {any[]}*/
 	export let entities = [];
 
-	/** @type {Vector2D} - axis offset via panning/moving the viewpoert */
-	// let canvasOffsetPosition = {
-	// 	x: 0,
-	// 	y: 0
-	// };
-
 	/** Cursor/mouse stats at various points in time */
 	const mCursorData = {
 		/** @type {Vector2D} position of the cursor when the user clicked down */
@@ -34,6 +28,7 @@
 
 	/** Global canvas session state */
 	const canvasData = {
+		/** @type {Vector2D} canvas position offsets (canvas pan vs entity movement)*/
 		offset: {
 			x: 0,
 			y: 0
@@ -41,10 +36,6 @@
 		scale: 1,
 		bgColor: 'rgba(0, 0, 0, 0.8'
 	};
-
-	// $: console.log('scale:', canvasOffsetScale);
-	/** for zoom in/out */
-	// let canvasOffsetScale = 1;
 
 	/** @type {any} */
 	let frame;
@@ -81,6 +72,8 @@
 
 		const time = performance.now();
 
+		ctx.save();
+
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 		ctx.fillStyle = canvasData.bgColor;
 		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -96,6 +89,8 @@
 				ctx.drawImage(entity.img, cn_X, cn_Y, cn_Width, cn_Height);
 			}
 		}
+
+		ctx.restore();
 
 		frame = window.requestAnimationFrame(() => draw(time));
 		await prioritizeMainThread();
