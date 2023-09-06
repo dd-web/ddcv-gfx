@@ -43,6 +43,19 @@ declare global {
 		[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 	}
 
+	/** GUI Data for various control bindings to internal entities */
+	interface GUIData {
+		brushSize: number;
+		brushColor: string;
+	}
+
+	interface Entity {
+		id: number;
+		type: string;
+		zIndex: number;
+		draw?: (() => void) | null;
+	}
+
 	declare namespace svelteHTML {
 		interface HTMLAttributes<T> {
 			'on:mousewheel'?: (event: any) => any;

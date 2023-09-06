@@ -32,6 +32,23 @@
 		height: 600
 	};
 
+	/** Canvas runtime values associated with it's internal state that determines what is rendered and where */
+	let canvasData = {
+		/** @type {Vector2D} canvas position offsets (canvas pan vs entity movement)*/
+		offset: {
+			x: 0,
+			y: 0
+		},
+		scale: 1,
+		bgColor: 'rgba(0, 0, 0, 0.8'
+	};
+
+	/** @type {GUIData} */
+	let guiData = {
+		brushSize: 1,
+		brushColor: '#000000'
+	};
+
 	const entities = createEntityStore();
 
 	$: $entities ? console.log('entities', $entities) : null;
@@ -49,6 +66,9 @@
 	onMount(() => {
 		let sectionElement = refs?.canvas?.parentElement;
 		if (!sectionElement || !refs?.canvas) return;
+
+		let dpr = window.devicePixelRatio || 1;
+		console.log('dpr', dpr);
 
 		screenSize = {
 			width: sectionElement.clientWidth,
@@ -87,14 +107,9 @@
 		bind:elementRef={refs.canvas}
 		bind:canvasWidth={canvasSize.width}
 		bind:canvasHeight={canvasSize.height}
+		bind:canvasData
 	/>
 
 	<!-- right sidebar -->
-	<RightSidebar />
+	<RightSidebar bind:guiData entityStore={entities} bind:canvasData />
 </section>
-
-<style>
-	canvas {
-		@apply bg-white;
-	}
-</style>

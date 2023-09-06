@@ -26,16 +26,8 @@
 		isDown: false
 	};
 
-	/** Global canvas session state */
-	const canvasData = {
-		/** @type {Vector2D} canvas position offsets (canvas pan vs entity movement)*/
-		offset: {
-			x: 0,
-			y: 0
-		},
-		scale: 1,
-		bgColor: 'rgba(0, 0, 0, 0.8'
-	};
+	/** Global canvas session state @type {any} */
+	export let canvasData;
 
 	/** @type {any} */
 	let frame;
@@ -55,8 +47,9 @@
 	}
 
 	/**
-	 * awaiting this fn allows us to prioritize the main thread, requesting animation frames
-	 * only when the main thread is free
+	 * This is a trick to prioritize the main thread over animation frames
+	 * so they're only rendered when the main thread is free, or taken as available.
+	 * @see https://github.com/WICG/scheduling-apis/blob/main/explainers/yield-and-continuation.md
 	 */
 	function prioritizeMainThread() {
 		return new Promise((res) => {
@@ -122,7 +115,7 @@
 	function onWheel(e) {
 		let delta = e?.wheelDeltaY || e?.deltaY || 0;
 
-		canvasData.scale =
+		let scale =
 			delta > 0
 				? canvasData.scale >= 5
 					? 5
@@ -130,6 +123,8 @@
 				: canvasData.scale <= 0.25
 				? 0.25
 				: parseFloat((canvasData.scale - 0.1).toFixed(2));
+
+		canvasData = { ...canvasData, scale: scale };
 	}
 
 	onMount(() => {
@@ -146,8 +141,20 @@
 </script>
 
 <div class="bg-white relative">
-	<div class="absolute top-0 left-0 ml-2 text-black z-10">
-		<label for="zoom">zoom {canvasData.scale.toFixed(2)}x</label>
+	<div class="absolute top-0 left-0 ml-2 mt-2 text-black z-10">
+		<div
+			class="flex flex-col gap-1 items-center bg-zinc-800 p-2 rounded border border-zinc-600 shadow-md shadow-black/25"
+		>
+			<label class="text-white text-sm" for="zoom">zoom {canvasData.scale.toFixed(2)}</label>
+			<input
+				class="w-20"
+				type="range"
+				min="0.25"
+				max="5"
+				bind:value={canvasData.scale}
+				step="0.1"
+			/>
+		</div>
 	</div>
 	<canvas
 		id="canvas"

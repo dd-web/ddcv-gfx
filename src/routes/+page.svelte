@@ -3,7 +3,7 @@
 
 <svelte:head>
 	<title>Home</title>
-	<meta name="description" content="Canvas Game Demo" />
+	<meta name="description" content="photo editing and raster graphic design software" />
 </svelte:head>
 
 <section>
