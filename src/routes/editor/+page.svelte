@@ -52,7 +52,8 @@
 	/** @type {GUIData} */
 	let guiData = {
 		brushSize: 1,
-		brushColor: '#000000'
+		brushColor: '#000000',
+		toolMode: 'pan'
 	};
 
 	const entities = createEntityStore();
@@ -110,6 +111,7 @@
 		bind:canvasWidth={canvasSize.width}
 		bind:canvasHeight={canvasSize.height}
 		bind:canvasData
+		bind:guiData
 	/>
 
 	<!-- right sidebar -->

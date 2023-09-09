@@ -43,10 +43,14 @@ declare global {
 		[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 	}
 
+
+	type ToolMode = 'pan' | 'move' | 'brush' | 'scale' | 'rotate';
+
 	/** GUI Data for various control bindings to internal entities */
 	interface GUIData {
 		brushSize: number;
 		brushColor: string;
+		toolMode: ToolMode
 	}
 
 	interface Entity {

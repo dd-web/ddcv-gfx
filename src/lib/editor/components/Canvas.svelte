@@ -4,6 +4,8 @@
 	import { browser } from '$app/environment';
 	import { onMount, onDestroy } from 'svelte';
 
+	import Mode from './gui/Mode.svelte';
+
 	/** @type {HTMLCanvasElement?} */
 	export let elementRef = null;
 	export let canvasHeight = 0;
@@ -11,6 +13,12 @@
 
 	/** @type {any[]} */
 	export let entities = [];
+
+	/** Global canvas session state @type {any} */
+	export let canvasData;
+
+	/** @type {any} */
+	export let guiData;
 
 	/** Cursor/mouse stats at various points in time */
 	const mCursorData = {
@@ -27,9 +35,6 @@
 		/** is the user holding down the cursor now? */
 		isDown: false
 	};
-
-	/** Global canvas session state @type {any} */
-	export let canvasData;
 
 	/** @type {any} */
 	let frame;
@@ -175,7 +180,7 @@
 </script>
 
 <div class="bg-white relative">
-	<div class="absolute top-0 left-0 ml-2 mt-2 text-black z-10">
+	<div class="absolute top-0 left-0 ml-2 mt-2 z-10">
 		<div
 			class="flex flex-col gap-1 items-center bg-zinc-800 p-2 rounded border border-zinc-600 shadow-md shadow-black/25"
 		>
@@ -190,6 +195,9 @@
 			/>
 		</div>
 	</div>
+
+	<Mode bind:guiData />
+
 	<canvas
 		id="canvas"
 		bind:this={elementRef}
