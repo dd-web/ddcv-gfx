@@ -1,5 +1,5 @@
 
-function createIdManager() {
+export function createIdManager() {
   let value = 0;
 
   const id = () => {

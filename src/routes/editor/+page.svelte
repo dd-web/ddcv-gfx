@@ -40,7 +40,13 @@
 			y: 0
 		},
 		scale: 1,
-		bgColor: 'rgba(0, 0, 0, 0.8'
+		bgColor: '#000000cc',
+		stage: {
+			width: 800,
+			height: 600,
+			color: '#ffffff'
+		},
+		selectionOffset: 0
 	};
 
 	/** @type {GUIData} */
@@ -51,16 +57,12 @@
 
 	const entities = createEntityStore();
 
-	$: $entities ? console.log('entities', $entities) : null;
-
 	/**
 	 * Adds a new entity to the list of entities
 	 * @param {CustomEvent<any>} entity;
 	 */
 	function addEntity(entity) {
 		entities.addEntity(entity.detail);
-
-		console.log('$entities', $entities);
 	}
 
 	onMount(() => {

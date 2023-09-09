@@ -1,4 +1,6 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher();
 	import { browser } from '$app/environment';
 	import { onMount, onDestroy } from 'svelte';
 
@@ -7,7 +9,7 @@
 	export let canvasHeight = 0;
 	export let canvasWidth = 0;
 
-	/** @type {any[]}*/
+	/** @type {any[]} */
 	export let entities = [];
 
 	/** Cursor/mouse stats at various points in time */
@@ -63,7 +65,7 @@
 		const ctx = elementRef.getContext('2d');
 		if (!ctx) return;
 
-		const time = performance.now();
+		const fStart = performance.now();
 
 		ctx.save();
 
@@ -71,21 +73,53 @@
 		ctx.fillStyle = canvasData.bgColor;
 		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-		for (let entity of entities) {
-			if (entity.type === 'image') {
-				let en_Scale = entity.ratios.width + entity.ratios.height / 2;
-				let cn_Width = (entity.size.width / en_Scale) * canvasData.scale;
-				let cn_Height = (entity.size.height / en_Scale) * canvasData.scale;
-				let cn_X = canvasWidth / 2 - cn_Width / 2 - canvasData.offset.x;
-				let cn_Y = canvasHeight / 2 - cn_Height / 2 - canvasData.offset.y;
+		/**
+		 * Render the staging area
+		 * we use 1 here instead of a scale because the staging area's size can be predicted
+		 * unline any random image the user might upload
+		 */
+		let csn_Width = (canvasData.stage.width / 1) * canvasData.scale;
+		let csn_Height = (canvasData.stage.height / 1) * canvasData.scale;
 
+		let csn_X = canvasWidth / 2 - csn_Width / 2 - canvasData.offset.x;
+		let csn_Y = canvasHeight / 2 - csn_Height / 2 - canvasData.offset.y;
+
+		ctx.fillStyle = canvasData.stage.color;
+		ctx.fillRect(csn_X, csn_Y, csn_Width, csn_Height);
+
+		/**
+		 * Render entities (if they're visible)
+		 */
+		for (let entity of entities) {
+			if (!entity.visible) continue;
+
+			/** Localize variables */
+			let en_Scale = entity.ratios.width + entity.ratios.height / 2;
+			let cn_Width = (entity.size.width / en_Scale) * canvasData.scale;
+			let cn_Height = (entity.size.height / en_Scale) * canvasData.scale;
+			let cn_X = canvasWidth / 2 - cn_Width / 2 - canvasData.offset.x;
+			let cn_Y = canvasHeight / 2 - cn_Height / 2 - canvasData.offset.y;
+
+			if (entity.type === 'image') {
 				ctx.drawImage(entity.img, cn_X, cn_Y, cn_Width, cn_Height);
+			}
+
+			/** Selection snake */
+			if (entity.selected) {
+				canvasData.selectionOffset += 0.25;
+				ctx.setLineDash([8, 8]);
+				ctx.lineDashOffset = canvasData.selectionOffset;
+				ctx.strokeRect(cn_X - 1, cn_Y - 1, cn_Width + 2, cn_Height + 2);
+			}
+
+			if (canvasData.selectionOffset > 16) {
+				canvasData.selectionOffset = 0;
 			}
 		}
 
 		ctx.restore();
 
-		frame = window.requestAnimationFrame(() => draw(time));
+		frame = window.requestAnimationFrame(() => draw(fStart));
 		await prioritizeMainThread();
 	}
 
@@ -155,6 +189,7 @@
 				step="0.1"
 			/>
 		</div>
+		<button on:click={() => dispatch('frame-rate')}>fps</button>
 	</div>
 	<canvas
 		id="canvas"

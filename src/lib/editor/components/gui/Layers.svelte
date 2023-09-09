@@ -23,6 +23,9 @@
 			<Layer
 				on:up={(e) => entityStore.moveUp(e.detail)}
 				on:down={(e) => entityStore.moveDown(e.detail)}
+				on:hide={(e) => entityStore.hideEntity(e.detail)}
+				on:show={(e) => entityStore.showEntity(e.detail)}
+				on:select={(e) => entityStore.selectEntity(e.detail)}
 				{ent}
 			>
 				{#if ent.type === 'image'}

@@ -15,7 +15,7 @@
 		<img class="max-h-16" src={imageEntity.img.src} alt={imageEntity.file_name} />
 	</div>
 	<div>
-		<p class="text-amber-100">{imageEntity.file_name}</p>
+		<p class="text-amber-100 overflow-hidden text-ellipsis max-w-[8rem]">{imageEntity.file_name}</p>
 		<p class="text-xs italic whitespace-nowrap">
 			<span class="not-italic">actual:</span>
 			{imageEntity.size.width} x {imageEntity.size.height}

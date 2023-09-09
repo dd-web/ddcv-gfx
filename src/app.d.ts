@@ -53,6 +53,8 @@ declare global {
 		id: number;
 		type: string;
 		zIndex: number;
+		selected: boolean;
+		visible: boolean;
 		draw?: (() => void) | null;
 	}
 
@@ -60,6 +62,17 @@ declare global {
 		interface HTMLAttributes<T> {
 			'on:mousewheel'?: (event: any) => any;
 		}
+	}
+
+	type DeltaMap = {
+		start: number;
+		last: number;
+		span: number;
+	}
+
+	interface Frame {
+		delta: DeltaMap;
+		ordinal: number;
 	}
 
 }
