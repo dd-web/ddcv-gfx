@@ -1,6 +1,9 @@
 
 
 // See https://kit.svelte.dev/docs/types#app
+
+import type { SvelteComponent, ComponentType } from "svelte";
+
 // for information about these interfaces
 declare global {
 	namespace App {
@@ -77,6 +80,26 @@ declare global {
 	interface Frame {
 		delta: DeltaMap;
 		ordinal: number;
+	}
+
+	type CursorModeState = {
+		path: string;
+		element: HTMLImageElement?;
+	}
+
+	type CursorMode = {
+		[key in ToolMode]: {
+			up: CursorModeState
+			down: CursorModeState
+		}
+	}
+
+	interface CursorData {
+		mStartMove: Vector2D;
+		mEndMove: Vector2D;
+		mPosition: Vector2D;
+		isDown: boolean;
+		modes: CursorMode
 	}
 
 }

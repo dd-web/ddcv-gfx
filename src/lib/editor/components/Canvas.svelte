@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
+
 	import { browser } from '$app/environment';
 	import { onMount, onDestroy } from 'svelte';
 
@@ -17,10 +18,10 @@
 	/** Global canvas session state @type {any} */
 	export let canvasData;
 
-	/** @type {any} */
+	/** @type {GUIData} */
 	export let guiData;
 
-	/** Cursor/mouse stats at various points in time */
+	/** @type {CursorData} Cursor/mouse stats at various points in time */
 	const mCursorData = {
 		/** @type {Vector2D} position of the cursor when the user clicked down */
 		mStartMove: {
@@ -32,8 +33,65 @@
 			x: 0,
 			y: 0
 		},
+		mPosition: {
+			x: 0,
+			y: 0
+		},
 		/** is the user holding down the cursor now? */
-		isDown: false
+		isDown: false,
+		/** various cursor states and their references */
+		modes: {
+			pan: {
+				up: {
+					path: 'icon/Hand.svg',
+					element: null
+				},
+				down: {
+					path: 'icon/HandFist.svg',
+					element: null
+				}
+			},
+			move: {
+				up: {
+					path: 'icon/Hand.svg',
+					element: null
+				},
+				down: {
+					path: 'icon/HandFist.svg',
+					element: null
+				}
+			},
+			scale: {
+				up: {
+					path: 'icon/Hand.svg',
+					element: null
+				},
+				down: {
+					path: 'icon/HandFist.svg',
+					element: null
+				}
+			},
+			brush: {
+				up: {
+					path: 'icon/Hand.svg',
+					element: null
+				},
+				down: {
+					path: 'icon/HandFist.svg',
+					element: null
+				}
+			},
+			rotate: {
+				up: {
+					path: 'icon/Hand.svg',
+					element: null
+				},
+				down: {
+					path: 'icon/HandFist.svg',
+					element: null
+				}
+			}
+		}
 	};
 
 	/** @type {any} */
@@ -122,6 +180,27 @@
 			}
 		}
 
+		/** Render cursor */
+		let mc_Up = mCursorData.modes[guiData.toolMode].up.element;
+		let mc_Down = mCursorData.modes[guiData.toolMode].down.element;
+		if (mCursorData.isDown && !!mc_Down) {
+			ctx.drawImage(
+				mc_Down,
+				mCursorData.mPosition.x - (innerWidth - canvasWidth) / 2,
+				mCursorData.mPosition.y - (innerHeight - canvasHeight) / 2,
+				18,
+				18
+			);
+		} else if (!mCursorData.isDown && !!mc_Up) {
+			ctx.drawImage(
+				mc_Up,
+				mCursorData.mPosition.x - (innerWidth - canvasWidth) / 2,
+				mCursorData.mPosition.y - (innerHeight - canvasHeight) / 2,
+				20,
+				20
+			);
+		}
+
 		ctx.restore();
 
 		frame = window.requestAnimationFrame(() => draw(fStart));
@@ -130,6 +209,9 @@
 
 	/** @param {any} e */
 	function onMouseMove(e) {
+		mCursorData.mPosition.x = e.clientX;
+		mCursorData.mPosition.y = e.clientY;
+
 		if (mCursorData.isDown) {
 			canvasData.offset.x = mCursorData.mStartMove.x - e.clientX + mCursorData.mEndMove.x;
 			canvasData.offset.y = mCursorData.mStartMove.y - e.clientY + mCursorData.mEndMove.y;
@@ -166,8 +248,36 @@
 		canvasData = { ...canvasData, scale: scale };
 	}
 
+	/**
+	 * Setup render references for tools
+	 * @param {ToolMode[]} modes
+	 */
+	function setModeElements(modes) {
+		for (let i = 0; i < modes.length; i++) {
+			let me_Up = new Image();
+			let me_Down = new Image();
+
+			me_Up.onload = () => {
+				mCursorData.modes[modes[i]].up.element = me_Up;
+			};
+
+			me_Down.onload = () => {
+				mCursorData.modes[modes[i]].down.element = me_Down;
+			};
+
+			me_Up.src = mCursorData.modes[modes[i]].up.path;
+			me_Down.src = mCursorData.modes[modes[i]].down.path;
+		}
+	}
+
+	/** onload */
 	onMount(() => {
 		init();
+
+		if (browser) {
+			// setup render references for tools
+			setModeElements(['pan', 'move', 'scale', 'brush', 'rotate']);
+		}
 	});
 
 	onDestroy(() => {
@@ -200,6 +310,7 @@
 
 	<canvas
 		id="canvas"
+		class="cursor-none"
 		bind:this={elementRef}
 		height={canvasHeight}
 		width={canvasWidth}
