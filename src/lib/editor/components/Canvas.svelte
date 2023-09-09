@@ -189,7 +189,6 @@
 				step="0.1"
 			/>
 		</div>
-		<button on:click={() => dispatch('frame-rate')}>fps</button>
 	</div>
 	<canvas
 		id="canvas"
