@@ -7,12 +7,20 @@
 	import EyeOpen from '$lib/images/icons/EyeOpen.svelte';
 	import EyeSlash from '$lib/images/icons/EyeSlash.svelte';
 
-	/** @type {any} */
+	/** @type {Entity} */
 	export let ent;
+
+	/** @type {boolean} - more specific and detailed layer information & settings */
 	let expanded = false;
 
+	/** toggles expanded layer info panel section */
 	function toggle() {
 		expanded = !expanded;
+	}
+
+	/** @param {any} e */
+	function onOpacityChange(e) {
+		dispatch('opacity', { id: ent.id, opacity: e?.target?.value });
 	}
 </script>
 
@@ -72,7 +80,22 @@
 
 	{#if expanded}
 		<div class="mx-3 px-4 rounded bg-zinc-800/50">
-			<slot />
+			<div class="flex items-center justify-between gap-2">
+				<label for="layer-opacity">A: </label>
+				<input
+					class="w-full"
+					on:input={onOpacityChange}
+					type="range"
+					name="layer alpha"
+					id="layer-opacity"
+					min="0"
+					max="1"
+					step="0.05"
+				/>
+			</div>
+			<div>
+				<slot />
+			</div>
 		</div>
 	{/if}
 </li>

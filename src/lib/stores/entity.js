@@ -22,7 +22,7 @@ export function createEntityStore(element = undefined) {
   const addEntity = (obj = {}) => {
     let entIndex = get(entities).length === 0 ? 1 : Math.max.apply(null, get(entities).map(/** @param {any} e */(e) => e.zIndex)) + 1;
     /** @type {Entity} */
-    const ent = Object.assign({ id: 0, type: 'entity', zIndex: entIndex, selected: false, visible: true }, obj);
+    const ent = Object.assign({ id: 0, type: 'entity', zIndex: entIndex, selected: false, visible: true, opacity: 1 }, obj);
     ent.id = idManager.id();
 
     entities.update((arr) => {
@@ -114,6 +114,24 @@ export function createEntityStore(element = undefined) {
     });
   }
 
+  /**
+   * @param {number} id - id of the entity to modify
+   * @param {string} prop - property to modify
+   * @param {any} value - value to set
+   */
+  const setEntityProperty = (id, prop, value) => {
+    console.log('setting property', id, prop, value)
+    entities.update((ents) => {
+      ents.map(/** @param {any} e */(e) => {
+        if (e.id === id) {
+          e[prop] = value;
+        }
+        return e;
+      });
+      return ents;
+    })
+  }
+
   return {
     subscribe: entities.subscribe,
     set: entities.set,
@@ -127,5 +145,6 @@ export function createEntityStore(element = undefined) {
     addEntitySelection: addEntitySelection,
     hideEntity: /** @param {number} id */(id) => setEntityVis(id, false),
     showEntity: /** @param {number} id */(id) => setEntityVis(id, true),
+    changeOpacity: /** @param {number} id - @param {number} val */(id, val) => setEntityProperty(id, 'opacity', val),
   }
 }

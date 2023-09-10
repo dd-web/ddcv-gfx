@@ -26,6 +26,7 @@
 				on:hide={(e) => entityStore.hideEntity(e.detail)}
 				on:show={(e) => entityStore.showEntity(e.detail)}
 				on:select={(e) => entityStore.selectEntity(e.detail)}
+				on:opacity={(e) => entityStore.changeOpacity(e.detail.id, e.detail.opacity)}
 				{ent}
 			>
 				{#if ent.type === 'image'}

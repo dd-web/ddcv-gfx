@@ -38,60 +38,8 @@
 			y: 0
 		},
 		/** is the user holding down the cursor now? */
-		isDown: false,
+		isDown: false
 		/** various cursor states and their references */
-		modes: {
-			pan: {
-				up: {
-					path: 'icon/Hand.svg',
-					element: null
-				},
-				down: {
-					path: 'icon/HandFist.svg',
-					element: null
-				}
-			},
-			move: {
-				up: {
-					path: 'icon/Hand.svg',
-					element: null
-				},
-				down: {
-					path: 'icon/HandFist.svg',
-					element: null
-				}
-			},
-			scale: {
-				up: {
-					path: 'icon/Hand.svg',
-					element: null
-				},
-				down: {
-					path: 'icon/HandFist.svg',
-					element: null
-				}
-			},
-			brush: {
-				up: {
-					path: 'icon/Hand.svg',
-					element: null
-				},
-				down: {
-					path: 'icon/HandFist.svg',
-					element: null
-				}
-			},
-			rotate: {
-				up: {
-					path: 'icon/Hand.svg',
-					element: null
-				},
-				down: {
-					path: 'icon/HandFist.svg',
-					element: null
-				}
-			}
-		}
 	};
 
 	/** @type {any} */
@@ -115,6 +63,8 @@
 	 * This is a trick to prioritize the main thread over animation frames
 	 * so they're only rendered when the main thread is free, or taken as available.
 	 * @see https://github.com/WICG/scheduling-apis/blob/main/explainers/yield-and-continuation.md
+	 * while this implementation has nothing to do with any scheduling APIs,
+	 * the execution is similar to the one described in the explainer
 	 */
 	function prioritizeMainThread() {
 		return new Promise((res) => {
@@ -131,6 +81,7 @@
 		const fStart = performance.now();
 
 		ctx.save();
+		ctx.globalAlpha = 1;
 
 		ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 		ctx.fillStyle = canvasData.bgColor;
@@ -139,7 +90,7 @@
 		/**
 		 * Render the staging area
 		 * we use 1 here instead of a scale because the staging area's size can be predicted
-		 * unline any random image the user might upload
+		 * unlike any random image the user might upload
 		 */
 		let csn_Width = (canvasData.stage.width / 1) * canvasData.scale;
 		let csn_Height = (canvasData.stage.height / 1) * canvasData.scale;
@@ -150,10 +101,9 @@
 		ctx.fillStyle = canvasData.stage.color;
 		ctx.fillRect(csn_X, csn_Y, csn_Width, csn_Height);
 
-		/**
-		 * Render entities (if they're visible)
-		 */
+		/** Render entities (if they're visible) */
 		for (let entity of entities) {
+			ctx.globalAlpha = 1;
 			if (!entity.visible) continue;
 
 			/** Localize variables */
@@ -163,11 +113,14 @@
 			let cn_X = canvasWidth / 2 - cn_Width / 2 - canvasData.offset.x;
 			let cn_Y = canvasHeight / 2 - cn_Height / 2 - canvasData.offset.y;
 
+			ctx.globalAlpha = entity.opacity;
+
+			/** Image layers */
 			if (entity.type === 'image') {
 				ctx.drawImage(entity.img, cn_X, cn_Y, cn_Width, cn_Height);
 			}
 
-			/** Selection snake */
+			/** Selection visualization */
 			if (entity.selected) {
 				canvasData.selectionOffset += 0.25;
 				ctx.setLineDash([8, 8]);
@@ -180,26 +133,7 @@
 			}
 		}
 
-		/** Render cursor */
-		let mc_Up = mCursorData.modes[guiData.toolMode].up.element;
-		let mc_Down = mCursorData.modes[guiData.toolMode].down.element;
-		if (mCursorData.isDown && !!mc_Down) {
-			ctx.drawImage(
-				mc_Down,
-				mCursorData.mPosition.x - (innerWidth - canvasWidth) / 2,
-				mCursorData.mPosition.y - (innerHeight - canvasHeight) / 2,
-				18,
-				18
-			);
-		} else if (!mCursorData.isDown && !!mc_Up) {
-			ctx.drawImage(
-				mc_Up,
-				mCursorData.mPosition.x - (innerWidth - canvasWidth) / 2,
-				mCursorData.mPosition.y - (innerHeight - canvasHeight) / 2,
-				20,
-				20
-			);
-		}
+		// use css 'cursor' classes for cursor rendering
 
 		ctx.restore();
 
@@ -248,36 +182,9 @@
 		canvasData = { ...canvasData, scale: scale };
 	}
 
-	/**
-	 * Setup render references for tools
-	 * @param {ToolMode[]} modes
-	 */
-	function setModeElements(modes) {
-		for (let i = 0; i < modes.length; i++) {
-			let me_Up = new Image();
-			let me_Down = new Image();
-
-			me_Up.onload = () => {
-				mCursorData.modes[modes[i]].up.element = me_Up;
-			};
-
-			me_Down.onload = () => {
-				mCursorData.modes[modes[i]].down.element = me_Down;
-			};
-
-			me_Up.src = mCursorData.modes[modes[i]].up.path;
-			me_Down.src = mCursorData.modes[modes[i]].down.path;
-		}
-	}
-
 	/** onload */
 	onMount(() => {
 		init();
-
-		if (browser) {
-			// setup render references for tools
-			setModeElements(['pan', 'move', 'scale', 'brush', 'rotate']);
-		}
 	});
 
 	onDestroy(() => {
@@ -318,7 +225,31 @@
 		on:mousedown={onStartDrag}
 		on:mouseup={onEndDrag}
 		on:mousemove={onMouseMove}
+		class:cursor-pan-up={guiData.toolMode === 'pan' && !mCursorData.isDown}
+		class:cursor-pan-down={guiData.toolMode === 'pan' && mCursorData.isDown}
+		class:cursor-move-up={guiData.toolMode === 'move' && !mCursorData.isDown}
+		class:cursor-move-down={guiData.toolMode === 'move' && mCursorData.isDown}
+		class:cursor-scale-up={guiData.toolMode === 'scale' && !mCursorData.isDown}
 	>
 		Your browser does not support the HTML5 canvas tag.
 	</canvas>
 </div>
+
+<style>
+	.cursor-pan-up {
+		cursor: grab;
+	}
+
+	.cursor-pan-down {
+		cursor: grabbing;
+	}
+
+	.cursor-move-up,
+	.cursor-move-down {
+		cursor: move;
+	}
+
+	.cursor-scale-up {
+		cursor: crosshair;
+	}
+</style>

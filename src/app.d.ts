@@ -62,6 +62,7 @@ declare global {
 		zIndex: number;
 		selected: boolean;
 		visible: boolean;
+		opacity: number;
 		draw?: (() => void) | null;
 	}
 
@@ -82,24 +83,12 @@ declare global {
 		ordinal: number;
 	}
 
-	type CursorModeState = {
-		path: string;
-		element: HTMLImageElement?;
-	}
-
-	type CursorMode = {
-		[key in ToolMode]: {
-			up: CursorModeState
-			down: CursorModeState
-		}
-	}
 
 	interface CursorData {
 		mStartMove: Vector2D;
 		mEndMove: Vector2D;
 		mPosition: Vector2D;
 		isDown: boolean;
-		modes: CursorMode
 	}
 
 }
