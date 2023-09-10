@@ -46,8 +46,11 @@ declare global {
 		[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 	}
 
-
+	/** Cursor modes */
 	type ToolMode = 'pan' | 'move' | 'brush' | 'scale' | 'rotate';
+
+	/** Entity type determines how it's rendered */
+	type EntityType = 'image' | 'entity' | 'text' | 'brush' | 'path';
 
 	/** GUI Data for various control bindings to internal entities */
 	interface GUIData {
@@ -56,34 +59,43 @@ declare global {
 		toolMode: ToolMode
 	}
 
-	interface Entity {
+	/** Shared entity propertiess */
+	type EntityBase = {
+		type: EntityType
+		size: Area2D;
+		position: Vector2D;
+		rotation: number;
+		scale: Vector2D;
+	}
+
+	/** Objects that have properties to determine how they're rendered and shown in the viewport */
+	interface Entity extends EntityBase {
+		[key: string]: any;
 		id: number;
-		type: string;
 		zIndex: number;
 		selected: boolean;
 		visible: boolean;
 		opacity: number;
-		draw?: (() => void) | null;
 	}
 
 	declare namespace svelteHTML {
 		interface HTMLAttributes<T> {
-			'on:mousewheel'?: (event: any) => any;
+			'on:wheel'?: (event: any) => any;
 		}
 	}
 
-	type DeltaMap = {
-		start: number;
-		last: number;
-		span: number;
+	/** Global properties that affect viewport renders, like selection visualizers and scale  */
+	interface CanvasData {
+		offset: Vector2D;
+		scale: number;
+		bgColor: string;
+		stage: Area2D & {
+			color: string
+		},
+		selectionOffset: number;
 	}
 
-	interface Frame {
-		delta: DeltaMap;
-		ordinal: number;
-	}
-
-
+	/** Cursor states and properties, aims to be always up to date */
 	interface CursorData {
 		mStartMove: Vector2D;
 		mEndMove: Vector2D;

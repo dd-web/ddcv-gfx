@@ -39,7 +39,6 @@
 		},
 		/** is the user holding down the cursor now? */
 		isDown: false
-		/** various cursor states and their references */
 	};
 
 	/** @type {any} */

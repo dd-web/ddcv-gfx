@@ -1,52 +1,62 @@
 import { idManager } from "./id";
 import { writable, get } from "svelte/store";
 
-
 /**
  * Entity management store
  * @param {HTMLCanvasElement} [element] creates the store with an element from which it can get context
  */
 export function createEntityStore(element = undefined) {
-
   /** @type {import('svelte/store').Writable<Entity[]>} */
   const entities = writable([]);
   /** @type {import('svelte/store').Writable<HTMLCanvasElement>} */
   const canvas = writable(element);
 
-
   /**
-   * Add an entity to be managed
+   * Configures a new entity with the given parameters and adds it to the entity store
    * @param {Partial<Entity>} obj entity config object
    * @returns {number} id of the entity
    */
   const addEntity = (obj = {}) => {
-    let entIndex = get(entities).length === 0 ? 1 : Math.max.apply(null, get(entities).map(/** @param {any} e */(e) => e.zIndex)) + 1;
+    let entIndex = get(entities).length === 0 ? 1 : Math.max.apply(null, get(entities).map(/** @param {Entity} e */(e) => e.zIndex)) + 1;
     /** @type {Entity} */
-    const ent = Object.assign({ id: 0, type: 'entity', zIndex: entIndex, selected: false, visible: true, opacity: 1 }, obj);
+    const ent = Object.assign({
+      id: 0,
+      type: 'entity',
+      zIndex: entIndex,
+      selected: false,
+      visible: true,
+      opacity: 1,
+      size: { width: 0, height: 0 },
+      position: { x: 0, y: 0 },
+      rotation: 0,
+      scale: { x: 1, y: 1 },
+    }, obj);
+
     ent.id = idManager.id();
 
     entities.update((arr) => {
       arr.push(ent);
       return arr;
-    })
+    });
 
-    console.log('added entity', ent);
     return ent.id;
   }
 
-  /** @param {HTMLCanvasElement} element */
+  /**
+   * Updates the local canvas element reference
+   *  @param {HTMLCanvasElement} element - canvas element to set
+   */
   const updateCanvas = (element) => {
     canvas.set(element);
   }
 
   /**
-   * this resets all other entities to unselected unless the id matches,
-   * use addEntitySelection to add multiple selections
-   * @param {number} id 
+   * Selects an entity while deselecting all others, if the entity is already selected, deselects it
+   * @param {number} id - id of the entity to select (or deselect)
    */
   const selectEntity = (id) => {
     entities.update((ents) => {
-      ents.map(/** @param {any} e */(e) => {
+      ents.map(/** @param {Entity} e */(e) => {
         e.selected = e.id === id ? !e.selected : false;
         return e;
       });
@@ -55,74 +65,43 @@ export function createEntityStore(element = undefined) {
   }
 
   /**
-   * this will not modify other entities selected property and thus can be used
-   * for multiple selections. Use selectEntity to only select one entity at a time
-   * @param {number} id 
+   * Changes the zIndex of an entity, reordering the array to determine render order
+   * @param {number} id - id of the entity to move
+   * @param {'up'|'down'} dir - direction to move the entity
    */
-  const addEntitySelection = (id) => {
-    entities.update((ents) => {
-      ents.map(/** @param {any} e */(e) => {
-        if (e.id === id) {
-          e.selected = true;
-        }
-        return e;
+  const reorderSwap = (id, dir) => {
+    let currentIndex = get(entities).filter(/** @param {Entity} e */(e) => e.id === id)[0].zIndex;
+    if (currentIndex === 1 && dir === 'up') return;
+    if (currentIndex === get(entities).length && dir === 'down') return;
+
+    let swapUp = get(entities).filter(/** @param {Entity} e */(e) => e.zIndex === currentIndex - 1)[0];
+    let swapDown = get(entities).filter(/** @param {Entity} e */(e) => e.zIndex === currentIndex + 1)[0];
+
+    if (dir === 'up') {
+      entities.update((ents) => {
+        ents.filter(/** @param {Entity} e */(e) => e.id === id)[0].zIndex--;
+        ents.filter(/** @param {Entity} e */(e) => e.id === swapUp.id)[0].zIndex++;
+        return ents;
       });
-      return ents;
-    })
-  }
-
-  /** @param {number} id - @param {boolean} vis */
-  const setEntityVis = (id, vis) => {
-    entities.update((ents) => {
-      ents.map(/** @param {any} e */(e) => {
-        if (e.id === id) {
-          e.visible = vis;
-        }
-        return e;
+    } else if (dir === 'down') {
+      entities.update((ents) => {
+        ents.filter(/** @param {Entity} e */(e) => e.id === id)[0].zIndex++;
+        ents.filter(/** @param {Entity} e */(e) => e.id === swapDown.id)[0].zIndex--;
+        return ents;
       });
-      return ents;
-    })
-  }
-
-  /** @param {number} id - id of the entity to moveup */
-  const moveEntityZindexUp = (id) => {
-    /** @type {number} */
-    let currentIndex = get(entities).filter(/** @param {any} e */(e) => e.id === id)[0].zIndex;
-    if (currentIndex === 1) return;
-
-    let swapEnt = get(entities).filter(/** @param {any} e */(e) => e.zIndex === currentIndex - 1)[0];
-
-    entities.update((ents) => {
-      ents.filter(/** @param {any} e */(e) => e.id === id)[0].zIndex--;
-      ents.filter(/** @param {any} e */(e) => e.id === swapEnt.id)[0].zIndex++;
-      return ents;
-    });
-  }
-
-  /** @param {number} id - id of the entity to movedown */
-  const moveEntityZindexDown = (id) => {
-    /** @type {number} */
-    let currentIndex = get(entities).filter(/** @param {any} e */(e) => e.id === id)[0].zIndex;
-    if (currentIndex === get(entities).length) return;
-
-    let swapEnt = get(entities).filter(/** @param {any} e */(e) => e.zIndex === currentIndex + 1)[0];
-
-    entities.update((ents) => {
-      ents.filter(/** @param {any} e */(e) => e.id === id)[0].zIndex++;
-      ents.filter(/** @param {any} e */(e) => e.id === swapEnt.id)[0].zIndex--;
-      return ents;
-    });
+    }
   }
 
   /**
+   * Universal entity update function, only modifies the entity with the given id
    * @param {number} id - id of the entity to modify
    * @param {string} prop - property to modify
    * @param {any} value - value to set
    */
   const setEntityProperty = (id, prop, value) => {
-    console.log('setting property', id, prop, value)
+    // console.log('setting property', id, prop, value)
     entities.update((ents) => {
-      ents.map(/** @param {any} e */(e) => {
+      ents.map(/** @param {Entity} e */(e) => {
         if (e.id === id) {
           e[prop] = value;
         }
@@ -139,12 +118,13 @@ export function createEntityStore(element = undefined) {
     addEntity: addEntity,
     updateCanvas: updateCanvas,
     canvas: canvas,
-    moveUp: moveEntityZindexUp,
-    moveDown: moveEntityZindexDown,
+    moveUp: /** @param {number} id */(id) => reorderSwap(id, 'up'),
+    moveDown: /** @param {number} id */(id) => reorderSwap(id, 'down'),
     selectEntity: selectEntity,
-    addEntitySelection: addEntitySelection,
-    hideEntity: /** @param {number} id */(id) => setEntityVis(id, false),
-    showEntity: /** @param {number} id */(id) => setEntityVis(id, true),
+    addEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', true),
+    removeEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', false),
+    hideEntity: /** @param {number} id */(id) => setEntityProperty(id, 'visible', false),
+    showEntity: /** @param {number} id */(id) => setEntityProperty(id, 'visible', true),
     changeOpacity: /** @param {number} id - @param {number} val */(id, val) => setEntityProperty(id, 'opacity', val),
   }
 }

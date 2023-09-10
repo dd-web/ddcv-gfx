@@ -84,6 +84,7 @@
 				<label for="layer-opacity">A: </label>
 				<input
 					class="w-full"
+					bind:value={ent.opacity}
 					on:input={onOpacityChange}
 					type="range"
 					name="layer alpha"
