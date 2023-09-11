@@ -128,7 +128,7 @@ export function createEntityStore(element = undefined) {
       });
       return ents;
     });
-    console.log(get(entities));
+    // console.log(get(entities));
   }
 
   /**
@@ -159,6 +159,7 @@ export function createEntityStore(element = undefined) {
     addPosX: /** @param {number} id - @param {number} val */(id, val) => addEntityPosition(id, val, 0),
     addPosY: /** @param {number} id - @param {number} val */(id, val) => addEntityPosition(id, 0, val),
     addPosXY: /** @param {number} id - @param {number} x - @param {number} y */(id, x, y) => addEntityPosition(id, x, y),
+    setPosXY: /** @param {number} id - @param {number} x - @param {number} y */(id, x, y) => setEntityProperty(id, 'position', { x: x, y: y }),
     selectEntity: selectEntity,
     addEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', true),
     removeEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', false),
@@ -168,3 +169,7 @@ export function createEntityStore(element = undefined) {
     cascadeMoveOffset: cascadeMoveOffset,
   }
 }
+
+/**
+ * @typedef {ReturnType<createEntityStore>} EntityStore
+ */

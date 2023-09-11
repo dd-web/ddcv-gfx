@@ -15,16 +15,16 @@
 	export let canvasHeight = 0;
 	export let canvasWidth = 0;
 
-	/** @type {any[]} */
+	/** @type {Entity[]} */
 	export let entities = [];
 
-	/** @type {any} Global canvas session state  */
+	/** @type {CanvasData} Global canvas session state  */
 	export let canvasData;
 
 	/** @type {GUIData} */
 	export let guiData;
 
-	/** @type {any} */
+	/** @type {import('$lib/stores/entity').EntityStore} */
 	export let entityStore;
 
 	/** @type {CursorData} Cursor/mouse stats at various points in time */
@@ -93,15 +93,20 @@
 		ctx.fillStyle = canvasData.bgColor;
 		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-		/** these scales are not setup correctly - still looking into this */
+		/** Update:
+		 *  the scales seem correct but the offset applied while moving an entity is being applied
+		 *  incorrectly. still looking into this and ways to fix it. for now it "works" but it's not
+		 *  perfect, the movement offset is scaled which we need for it's final position but it's
+		 *  causing the amount moved to be scaled as well which is not what we want.
+		 */
 		let cnv_scale_offset_center_x =
-			(canvasWidth * canvasData.scale) / 2 -
+			canvasWidth * canvasData.scale * 0.5 -
 			canvasData.offset.x -
-			(canvasWidth * canvasData.scale) / 2;
+			canvasWidth * canvasData.scale * 0.5;
 		let cnv_scale_offset_center_y =
-			(canvasHeight * canvasData.scale) / 2 -
+			canvasHeight * canvasData.scale * 0.5 -
 			canvasData.offset.y -
-			(canvasHeight * canvasData.scale) / 2;
+			canvasHeight * canvasData.scale * 0.5;
 
 		ctx.fillStyle = canvasData.stage.color;
 		ctx.fillRect(
@@ -113,7 +118,6 @@
 
 		/** Render entities (if they're visible) */
 		for (let entity of entities) {
-			/** Reset any changes we've made on other entities */
 			if (!entity.visible) continue;
 
 			/**  ensure the image fits in the viewport and is not distorted */
@@ -124,12 +128,12 @@
 			/** Image layers */
 			if (entity.type === 'image') {
 				if (entity.selected && guiData.toolMode === 'move' && mCursorData.isDown) {
-					entity.position.x =
-						entity.move_offset_position.x - mCursorData.mStartMove.x + mCursorData.mPosition.x;
-					entity.position.y =
-						entity.move_offset_position.y - mCursorData.mStartMove.y + mCursorData.mPosition.y;
+					entityStore.setPosXY(
+						entity.id,
+						entity.move_offset_position.x - mCursorData.mStartMove.x + mCursorData.mPosition.x,
+						entity.move_offset_position.y - mCursorData.mStartMove.y + mCursorData.mPosition.y
+					);
 				}
-
 				ctx.drawImage(
 					entity.img,
 					cnv_scale_offset_center_x + entity.position.x * canvasData.scale,
@@ -139,7 +143,7 @@
 				);
 			}
 
-			/** Selection visualization */
+			/** Selection visualization snake */
 			if (entity.selected) {
 				ctx.globalAlpha = 1;
 				canvasData.selectionOffset += 0.25;
