@@ -18,6 +18,7 @@
 		let file = event.target.files[0];
 
 		let shadowEl = new Image();
+		// let canvasEl = document.createElement('canvas');
 		shadowEl.src = URL.createObjectURL(file);
 
 		let imageEntity = {
@@ -37,18 +38,22 @@
 				x: 0,
 				y: 0
 			},
+			move_offset_position: {
+				x: 0,
+				y: 0
+			},
 			rotation: 0
 		};
 
 		shadowEl.onload = (e) => {
 			imageEntity.size = {
-				width: shadowEl.width,
-				height: shadowEl.height
+				width: Math.floor(shadowEl.width),
+				height: Math.floor(shadowEl.height)
 			};
 			if (canvasElement) {
 				imageEntity.ratios = {
-					width: shadowEl.width / canvasElement.clientWidth,
-					height: shadowEl.height / canvasElement.clientHeight
+					width: canvasElement.getBoundingClientRect().width / shadowEl.width,
+					height: canvasElement.getBoundingClientRect().height / shadowEl.height
 				};
 			}
 			currentImage = shadowEl.src;

@@ -9,7 +9,7 @@
 	export let guiData;
 
 	/**
-	 * Sets the tool mode
+	 * Sets which tool mode the cursor will use on the canvas
 	 * @param {ToolMode} [mode='pan']
 	 */
 	function setMode(mode = 'pan') {

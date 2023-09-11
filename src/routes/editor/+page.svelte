@@ -71,6 +71,7 @@
 		if (!sectionElement || !refs?.canvas) return;
 
 		let dpr = window.devicePixelRatio || 1;
+		canvasData.scale = dpr;
 		console.log('dpr', dpr);
 
 		screenSize = {
@@ -112,6 +113,7 @@
 		bind:canvasHeight={canvasSize.height}
 		bind:canvasData
 		bind:guiData
+		entityStore={entities}
 	/>
 
 	<!-- right sidebar -->

@@ -7,6 +7,9 @@
 
 	import Mode from './gui/Mode.svelte';
 
+	/** @CONSTANT DEBUG MODE - debug helpers */
+	const DEBUGMODE = false;
+
 	/** @type {HTMLCanvasElement?} */
 	export let elementRef = null;
 	export let canvasHeight = 0;
@@ -15,11 +18,14 @@
 	/** @type {any[]} */
 	export let entities = [];
 
-	/** Global canvas session state @type {any} */
+	/** @type {any} Global canvas session state  */
 	export let canvasData;
 
 	/** @type {GUIData} */
 	export let guiData;
+
+	/** @type {any} */
+	export let entityStore;
 
 	/** @type {CursorData} Cursor/mouse stats at various points in time */
 	const mCursorData = {
@@ -33,6 +39,7 @@
 			x: 0,
 			y: 0
 		},
+		/** @type {Vector2D} position of the cursor currently */
 		mPosition: {
 			x: 0,
 			y: 0
@@ -86,53 +93,70 @@
 		ctx.fillStyle = canvasData.bgColor;
 		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-		/**
-		 * Render the staging area
-		 * we use 1 here instead of a scale because the staging area's size can be predicted
-		 * unlike any random image the user might upload
-		 */
-		let csn_Width = (canvasData.stage.width / 1) * canvasData.scale;
-		let csn_Height = (canvasData.stage.height / 1) * canvasData.scale;
-
-		let csn_X = canvasWidth / 2 - csn_Width / 2 - canvasData.offset.x;
-		let csn_Y = canvasHeight / 2 - csn_Height / 2 - canvasData.offset.y;
+		/** these scales are not setup correctly - still looking into this */
+		let cnv_scale_offset_center_x =
+			(canvasWidth * canvasData.scale) / 2 -
+			canvasData.offset.x -
+			(canvasWidth * canvasData.scale) / 2;
+		let cnv_scale_offset_center_y =
+			(canvasHeight * canvasData.scale) / 2 -
+			canvasData.offset.y -
+			(canvasHeight * canvasData.scale) / 2;
 
 		ctx.fillStyle = canvasData.stage.color;
-		ctx.fillRect(csn_X, csn_Y, csn_Width, csn_Height);
+		ctx.fillRect(
+			cnv_scale_offset_center_x,
+			cnv_scale_offset_center_y,
+			canvasData.stage.width * canvasData.scale,
+			canvasData.stage.height * canvasData.scale
+		);
 
 		/** Render entities (if they're visible) */
 		for (let entity of entities) {
-			ctx.globalAlpha = 1;
+			/** Reset any changes we've made on other entities */
 			if (!entity.visible) continue;
 
-			/** Localize variables */
-			let en_Scale = entity.ratios.width + entity.ratios.height / 2;
-			let cn_Width = (entity.size.width / en_Scale) * canvasData.scale;
-			let cn_Height = (entity.size.height / en_Scale) * canvasData.scale;
-			let cn_X = canvasWidth / 2 - cn_Width / 2 - canvasData.offset.x;
-			let cn_Y = canvasHeight / 2 - cn_Height / 2 - canvasData.offset.y;
+			/**  ensure the image fits in the viewport and is not distorted */
+			let ent_scale = Math.min(entity.ratios.width, entity.ratios.height);
 
 			ctx.globalAlpha = entity.opacity;
 
 			/** Image layers */
 			if (entity.type === 'image') {
-				ctx.drawImage(entity.img, cn_X, cn_Y, cn_Width, cn_Height);
+				if (entity.selected && guiData.toolMode === 'move' && mCursorData.isDown) {
+					entity.position.x =
+						entity.move_offset_position.x - mCursorData.mStartMove.x + mCursorData.mPosition.x;
+					entity.position.y =
+						entity.move_offset_position.y - mCursorData.mStartMove.y + mCursorData.mPosition.y;
+				}
+
+				ctx.drawImage(
+					entity.img,
+					cnv_scale_offset_center_x + entity.position.x * canvasData.scale,
+					cnv_scale_offset_center_y + entity.position.y * canvasData.scale,
+					entity.size.width * canvasData.scale * ent_scale,
+					entity.size.height * canvasData.scale * ent_scale
+				);
 			}
 
 			/** Selection visualization */
 			if (entity.selected) {
+				ctx.globalAlpha = 1;
 				canvasData.selectionOffset += 0.25;
 				ctx.setLineDash([8, 8]);
 				ctx.lineDashOffset = canvasData.selectionOffset;
-				ctx.strokeRect(cn_X - 1, cn_Y - 1, cn_Width + 2, cn_Height + 2);
+				ctx.strokeRect(
+					cnv_scale_offset_center_x + entity.position.x * canvasData.scale - 1,
+					cnv_scale_offset_center_y + entity.position.y * canvasData.scale - 1,
+					entity.size.width * ent_scale * canvasData.scale + 2,
+					entity.size.height * ent_scale * canvasData.scale + 2
+				);
 			}
 
 			if (canvasData.selectionOffset > 16) {
 				canvasData.selectionOffset = 0;
 			}
 		}
-
-		// use css 'cursor' classes for cursor rendering
 
 		ctx.restore();
 
@@ -145,7 +169,7 @@
 		mCursorData.mPosition.x = e.clientX;
 		mCursorData.mPosition.y = e.clientY;
 
-		if (mCursorData.isDown) {
+		if (mCursorData.isDown && guiData.toolMode === 'pan') {
 			canvasData.offset.x = mCursorData.mStartMove.x - e.clientX + mCursorData.mEndMove.x;
 			canvasData.offset.y = mCursorData.mStartMove.y - e.clientY + mCursorData.mEndMove.y;
 		}
@@ -156,6 +180,8 @@
 		mCursorData.isDown = true;
 		mCursorData.mStartMove.x = e.clientX;
 		mCursorData.mStartMove.y = e.clientY;
+
+		entityStore.cascadeMoveOffset();
 	}
 
 	/** @param {MouseEvent} e */
@@ -186,6 +212,7 @@
 		init();
 	});
 
+	/** cleanup */
 	onDestroy(() => {
 		if (browser) {
 			window.cancelAnimationFrame(frame);
@@ -210,6 +237,12 @@
 				step="0.1"
 			/>
 		</div>
+		{#if DEBUGMODE}
+			<div>
+				<span class="bg-zinc-800">offset x {canvasData.offset.x}</span>
+				<span class="bg-zinc-800">offset y {canvasData.offset.y}</span>
+			</div>
+		{/if}
 	</div>
 
 	<Mode bind:guiData />

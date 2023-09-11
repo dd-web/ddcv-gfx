@@ -21,12 +21,13 @@
 	<ul>
 		{#each entitiesOrdered as ent (ent.id)}
 			<Layer
-				on:up={(e) => entityStore.moveUp(e.detail)}
-				on:down={(e) => entityStore.moveDown(e.detail)}
+				on:up={(e) => entityStore.moveLayerUp(e.detail)}
+				on:down={(e) => entityStore.moveLayerDown(e.detail)}
 				on:hide={(e) => entityStore.hideEntity(e.detail)}
 				on:show={(e) => entityStore.showEntity(e.detail)}
 				on:select={(e) => entityStore.selectEntity(e.detail)}
 				on:opacity={(e) => entityStore.changeOpacity(e.detail.id, e.detail.opacity)}
+				on:x={(e) => entityStore.addPosX(e.detail.id, e.detail.value)}
 				{ent}
 			>
 				{#if ent.type === 'image'}

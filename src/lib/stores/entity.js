@@ -93,6 +93,25 @@ export function createEntityStore(element = undefined) {
   }
 
   /**
+   * Adds a vector to the current position of an entity
+   * @param {number} id id of the entity to move
+   * @param {number} x - value to add to the x position (can be negative)
+   * @param {number} y - value to add to the y position (can be negative)
+   */
+  const addEntityPosition = (id, x, y) => {
+    entities.update((ents) => {
+      ents.map(/** @param {Entity} e */(e) => {
+        if (e.id === id) {
+          e.position.x += x;
+          e.position.y += y;
+        }
+        return e;
+      });
+      return ents;
+    });
+  }
+
+  /**
    * Universal entity update function, only modifies the entity with the given id
    * @param {number} id - id of the entity to modify
    * @param {string} prop - property to modify
@@ -108,7 +127,24 @@ export function createEntityStore(element = undefined) {
         return e;
       });
       return ents;
-    })
+    });
+    console.log(get(entities));
+  }
+
+  /**
+   * Sets the movement offset position of all entities
+   * called on mouse down, an intermediary value so we can update the position
+   * in real time while the mouse is moving
+   */
+  const cascadeMoveOffset = () => {
+    entities.update((ents) => {
+      ents.map(/** @param {Entity} e */(e) => {
+        e.move_offset_position.x = e.position.x;
+        e.move_offset_position.y = e.position.y;
+        return e;
+      });
+      return ents;
+    });
   }
 
   return {
@@ -118,13 +154,17 @@ export function createEntityStore(element = undefined) {
     addEntity: addEntity,
     updateCanvas: updateCanvas,
     canvas: canvas,
-    moveUp: /** @param {number} id */(id) => reorderSwap(id, 'up'),
-    moveDown: /** @param {number} id */(id) => reorderSwap(id, 'down'),
+    moveLayerUp: /** @param {number} id */(id) => reorderSwap(id, 'up'),
+    moveLayerDown: /** @param {number} id */(id) => reorderSwap(id, 'down'),
+    addPosX: /** @param {number} id - @param {number} val */(id, val) => addEntityPosition(id, val, 0),
+    addPosY: /** @param {number} id - @param {number} val */(id, val) => addEntityPosition(id, 0, val),
+    addPosXY: /** @param {number} id - @param {number} x - @param {number} y */(id, x, y) => addEntityPosition(id, x, y),
     selectEntity: selectEntity,
     addEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', true),
     removeEntitySelection: /** @param {number} id */(id) => setEntityProperty(id, 'selected', false),
     hideEntity: /** @param {number} id */(id) => setEntityProperty(id, 'visible', false),
     showEntity: /** @param {number} id */(id) => setEntityProperty(id, 'visible', true),
     changeOpacity: /** @param {number} id - @param {number} val */(id, val) => setEntityProperty(id, 'opacity', val),
+    cascadeMoveOffset: cascadeMoveOffset,
   }
 }

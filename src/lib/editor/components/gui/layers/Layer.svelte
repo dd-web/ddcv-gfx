@@ -95,6 +95,10 @@
 				/>
 			</div>
 			<div>
+				<button on:click={() => dispatch('x', { id: ent.id, value: -1 })}>left</button>
+				<button on:click={() => dispatch('x', { id: ent.id, value: 1 })}>right</button>
+			</div>
+			<div>
 				<slot />
 			</div>
 		</div>
